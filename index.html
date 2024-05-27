@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis check</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-image: url('tennis_court.jpg');
+      background-size: cover;
+      position: relative; /* Necesario para posicionar el logo */
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+      border: 1px solid black;
+      cursor: url('tennis_racket.png'), auto;
+    }
+
+    .game-logo {
+      position: absolute;
+      top: 20px; /* Ajusta la posición vertical */
+      right: 20px; /* Ajusta la posición horizontal */
+    }
+
+    .score-container {
+      position: absolute;
+      bottom: 20px; /* Ajusta la posición vertical */
+      left: 20px; /* Ajusta la posición horizontal */
+      margin-right: -150px; /* Margen derecho negativo */
+      width: 350px; /* Ancho del contenedor de puntuación */
+    }
+  </style>
+</head>
+<body>
+  <header class="text-center">
+    <h1>Tennis check</h1>
+    <img src="game_logo.png" alt="Game Logo" class="game-logo">
+  </header>
+
+  <main class="container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="row justify-content-center mt-3 score-container">
+      <div class="col-md-6 text-center">
+        <h3>*Level: <span id="level">1</span></h3>
+        <h3>*Score: <span id="score">0</span></h3>
+        <h3>*Total de Circulos Reventados: <span id="totalCirclesPopped">0</span></h3>
+        <h4>*Instruciones*</h4>
+        <p>Haz clic en los círculos para eliminarlos. ¡Cada círculo que golpees te da un punto!</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center mt-5">
+    <p>Creado por Ivan Alejandro Garcia Resendiz</p>
+  </footer>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Inicialización del canvas
+      var canvas = document.getElementById("gameCanvas");
+      var ctx = canvas.getContext("2d");
+      var levelDisplay = document.getElementById("level");
+      var scoreDisplay = document.getElementById("score");
+      var totalCirclesPoppedDisplay = document.getElementById("totalCirclesPopped");
+      var score = 0;
+      var level = 1;
+      var circles = [];
+      var circlesClicked = 0;
+      var totalCirclesPopped = 0;
+      var tennisBallImg = new Image();
+      tennisBallImg.src = 'tennis_ball.png'; // Ruta de la imagen de la pelota de tenis
+      var tennisRacketImg = new Image();
+      tennisRacketImg.onload = function() {
+        canvas.style.cursor = "url('tennis_racket.png'), auto";
+      };
+      tennisRacketImg.src = 'tennis_racket.png'; // Ruta de la imagen de la raqueta de tenis
+
+      // Variables del juego
+      var circlesPerLevel = 20;
+
+      // Función para generar un número aleatorio dentro de un rango
+      function getRandomNumber(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      // Función para crear un círculo
+      function createCircle() {
+        var radius = 20;
+        var x = getRandomNumber(radius, canvas.width - radius);
+        var y = getRandomNumber(radius, canvas.height - radius);
+        var dx = getRandomNumber(-2, 2); // Velocidad horizontal
+        var dy = getRandomNumber(-2, 2); // Velocidad vertical
+
+        circles.push({ x: x, y: y, radius: radius, dx: dx, dy: dy });
+      }
+
+      // Función para dibujar un círculo en el canvas
+      function drawCircle(circle) {
+        ctx.drawImage(tennisBallImg, circle.x - circle.radius, circle.y - circle.radius, circle.radius * 2, circle.radius * 2);
+      }
+
+      // Función para dibujar todos los círculos en el canvas
+      function drawCircles() {
+        circles.forEach(function(circle) {
+          drawCircle(circle);
+        });
+      }
+
+      // Función para actualizar la posición de los círculos y detectar colisiones
+      function updateCircles() {
+        circles.forEach(function(circle, index) {
+          circle.x += circle.dx;
+          circle.y += circle.dy;
+
+          // Verificar colisión con los bordes del canvas
+          if (circle.x + circle.radius > canvas.width || circle.x - circle.radius < 0) {
+            circle.dx = -circle.dx; // Cambiar dirección horizontal
+          }
+          if (circle.y + circle.radius > canvas.height || circle.y - circle.radius < 0) {
+            circle.dy = -circle.dy; // Cambiar dirección vertical
+          }
+
+          // Verificar colisión con otras pelotas
+          for (var i = index + 1; i < circles.length; i++) {
+            var otherCircle = circles[i];
+            var dx = otherCircle.x - circle.x;
+            var dy = otherCircle.y - circle.y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < circle.radius * 2) {
+              // Cambiar direcciones de ambas pelotas
+              var tempDx = circle.dx;
+              var tempDy = circle.dy;
+              circle.dx = otherCircle.dx;
+              circle.dy = otherCircle.dy;
+              otherCircle.dx = tempDx;
+              otherCircle.dy = tempDy;
+            }
+          }
+        });
+      }
+
+      // Función para manejar el clic del mouse en el canvas
+      function handleClick(event) {
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = event.clientX - rect.left;
+        var mouseY = event.clientY - rect.top;
+
+        // Verificar si el clic del mouse está dentro de algún círculo
+        circles.forEach(function(circle, index) {
+          var dx = mouseX - circle.x;
+          var dy = mouseY - circle.y;
+          var distance = Math.sqrt(dx * dx + dy * dy);
+
+if (distance < circle.radius) {
+  // Eliminar el círculo
+  circles.splice(index, 1);
+  // Incrementar el puntaje
+  score++;
+  scoreDisplay.textContent = score;
+
+  // Incrementar el contador de círculos clickeados
+  circlesClicked++;
+
+  // Incrementar el total de círculos eliminados
+  totalCirclesPopped++;
+  totalCirclesPoppedDisplay.textContent = totalCirclesPopped;
+
+  // Verificar si se ha alcanzado el número de círculos por nivel
+  if (circlesClicked >= circlesPerLevel) {
+    // Incrementar el nivel
+    level++;
+    levelDisplay.textContent = level;
+    // Reiniciar el contador de círculos clickeados
+    circlesClicked = 0;
+    // Aumentar la velocidad de las pelotas para el siguiente nivel
+    increaseBallSpeed();
+    // Crear más círculos para el siguiente nivel
+    for (var i = 0; i < circlesPerLevel; i++) {
+      createCircle();
+    }
+  }
+}
+});
+}
+
+// Aumentar la velocidad de las pelotas para el siguiente nivel
+function increaseBallSpeed() {
+circles.forEach(function(circle) {
+circle.dx *= 10; // Aumentar velocidad horizontal
+circle.dy *= 10; // Aumentar velocidad vertical
+});
+}
+
+// Agregar event listener para el clic del mouse
+canvas.addEventListener("click", handleClick);
+
+// Función principal del juego
+function mainLoop() {
+// Limpiar el canvas
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+// Dibujar y actualizar círculos
+updateCircles();
+drawCircles();
+
+// Si hay menos de la cantidad de círculos por nivel, crear más
+while (circles.length < circlesPerLevel) {
+createCircle();
+}
+
+// Llamar a la función de nuevo
+requestAnimationFrame(mainLoop);
+}
+
+// Iniciar el juego
+mainLoop();
+});
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
