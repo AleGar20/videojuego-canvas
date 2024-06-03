@@ -72,7 +72,7 @@
       var score = 0;
       var level = 1;
       var lives = 3;
-      var maxLevel = 5;
+      var maxLevel = 3; // Change max level to 3
       var circles = [];
       var circlesClicked = 0;
       var totalCirclesPopped = 0;
@@ -174,11 +174,12 @@
       }
 
       function createCirclesForLevel() {
-        circles = [];
-        for (var i = 0; i < circlesPerLevel * level; i++) {
-          createCircle();
-        }
-      }
+  circles = [];
+  for (var i = 0; i < circlesPerLevel * level; i++) {
+    createCircle();
+  }
+}
+
 
       function resetLives() {
         lives = 3;
@@ -188,8 +189,7 @@
       function loseLife() {
         lives--;
         livesDisplay.textContent = lives;
-        if (lives === 0) {
-          gameOver();
+        if (lives === 0) {          gameOver();
         }
       }
 
@@ -199,13 +199,22 @@
       }
 
       function winGame() {
-        alert("Congratulations! You have completed all levels!");
-        resetGame();
+        if (level < maxLevel) {
+          alert("Congratulations! You have completed level " + level + ". Proceeding to the next level.");
+          level++;
+          levelDisplay.textContent = level;
+          circlesClicked = 0;
+          resetLives();
+          createCirclesForLevel();
+        } else {
+          alert("Congratulations! You have completed all levels!");
+          resetGame();
+        }
       }
 
       function resetGame() {
         score = 0;
-        level = 1;
+        level = 1; // Reset level to 1
         circlesClicked = 0;
         totalCirclesPopped = 0;
         totalCirclesPoppedDisplay.textContent = totalCirclesPopped;
@@ -230,6 +239,9 @@
   </script>
 </body>
 </html>
+
+
+       
 
 
 
